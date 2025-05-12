@@ -1,0 +1,6 @@
+@apiTechSkillPro_HostAddress = http://localhost:5269
+
+GET {{apiTechSkillPro_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

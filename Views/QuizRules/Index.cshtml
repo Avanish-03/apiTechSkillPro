@@ -1,0 +1,65 @@
+﻿@model IEnumerable<apiTechSkillPro.Models.QuizRules>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Quiz)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.NegativeMarking)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.NegativeMarkValue)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.TimeLimit)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ShowResult)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ShuffleQuestions)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Quiz.Title)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.NegativeMarking)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.NegativeMarkValue)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TimeLimit)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ShowResult)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ShuffleQuestions)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.RuleID">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.RuleID">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.RuleID">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

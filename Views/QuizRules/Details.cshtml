@@ -1,0 +1,54 @@
+﻿@model apiTechSkillPro.Models.QuizRules
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>QuizRules</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Quiz)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Quiz.Title)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.NegativeMarking)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.NegativeMarking)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.NegativeMarkValue)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.NegativeMarkValue)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.TimeLimit)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.TimeLimit)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.ShowResult)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.ShowResult)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.ShuffleQuestions)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.ShuffleQuestions)
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.RuleID">Edit</a> |
+    <a asp-action="Index">Back to List</a>
+</div>

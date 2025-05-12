@@ -1,0 +1,65 @@
+﻿@model IEnumerable<apiTechSkillPro.Models.QuizAttemptLog>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.AttemptID)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SelectedOption)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CorrectAnswer)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.IsCorrect)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AttemptTime)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Question)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.AttemptID)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.SelectedOption)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CorrectAnswer)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IsCorrect)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AttemptTime)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Question.CorrectAnswer)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.LogID">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.LogID">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.LogID">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

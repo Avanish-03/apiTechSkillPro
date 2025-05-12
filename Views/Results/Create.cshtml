@@ -1,0 +1,70 @@
+﻿@model apiTechSkillPro.Models.Result
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>Result</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="UserID" class="control-label"></label>
+                <select asp-for="UserID" class ="form-control" asp-items="ViewBag.UserID"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="QuizID" class="control-label"></label>
+                <select asp-for="QuizID" class ="form-control" asp-items="ViewBag.QuizID"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="AttemptID" class="control-label"></label>
+                <select asp-for="AttemptID" class ="form-control" asp-items="ViewBag.AttemptID"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="TotalMarks" class="control-label"></label>
+                <input asp-for="TotalMarks" class="form-control" />
+                <span asp-validation-for="TotalMarks" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ObtainedMarks" class="control-label"></label>
+                <input asp-for="ObtainedMarks" class="form-control" />
+                <span asp-validation-for="ObtainedMarks" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Percentage" class="control-label"></label>
+                <input asp-for="Percentage" class="form-control" />
+                <span asp-validation-for="Percentage" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Rank" class="control-label"></label>
+                <input asp-for="Rank" class="form-control" />
+                <span asp-validation-for="Rank" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="AttemptDate" class="control-label"></label>
+                <input asp-for="AttemptDate" class="form-control" />
+                <span asp-validation-for="AttemptDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="TimeTaken" class="control-label"></label>
+                <input asp-for="TimeTaken" class="form-control" />
+                <span asp-validation-for="TimeTaken" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
