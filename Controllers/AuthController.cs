@@ -11,6 +11,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System;
+using Humanizer;
 
 namespace apiTechSkillPro.Controllers
 {
@@ -26,42 +27,49 @@ namespace apiTechSkillPro.Controllers
             _context = context;
         }
 
-        // Signup endpoint
         [HttpPost("signup")]
-        public async Task<IActionResult> Signup([FromBody] UserRegisterDTO signupDTO)
+        public async Task<IActionResult> Signup([FromForm] UserRegisterDTO signupDTO)
         {
             if (signupDTO == null)
             {
                 return BadRequest("Invalid data.");
             }
 
-            // Check if the email already exists
             var existingUser = await _context.Users
-                                              .FirstOrDefaultAsync(u => u.Email == signupDTO.Email);
+                                             .FirstOrDefaultAsync(u => u.Email == signupDTO.Email);
             if (existingUser != null)
             {
                 return BadRequest("Email already in use.");
             }
 
-            // Check if the RoleID exists in the Roles table
             var role = await _context.Roles
-                                      .FirstOrDefaultAsync(r => r.RoleID == signupDTO.RoleID);
+                                     .FirstOrDefaultAsync(r => r.RoleID == signupDTO.RoleID);
             if (role == null)
             {
                 return BadRequest($"Invalid role ID: {signupDTO.RoleID}. Please provide a valid RoleID.");
             }
 
-            // Create user entity
             var user = new User
             {
                 FullName = signupDTO.FullName,
                 Email = signupDTO.Email,
                 PasswordHash = HashPassword(signupDTO.Password),
-                RoleID = signupDTO.RoleID,
-                ProfileImage = signupDTO.ProfileImage
+                RoleID = signupDTO.RoleID
             };
 
-            // Add to database and save
+            if (signupDTO.ProfileImage != null)
+            {
+                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(signupDTO.ProfileImage.FileName);
+                var filePath = Path.Combine("wwwroot/profileimages", fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await signupDTO.ProfileImage.CopyToAsync(stream);
+                }
+
+                user.ProfileImage = "/profileimages/" + fileName;
+            }
+
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
@@ -89,8 +97,10 @@ namespace apiTechSkillPro.Controllers
             var token = GenerateJwtToken(user);
 
             // Return token along with user details
-            return Ok(new { token, fullName = user.FullName, email = user.Email, roleId = user.RoleID });
+            return Ok(new { token, userID = user.UserID, fullName = user.FullName, email = user.Email, roleId = user.RoleID });
         }
+
+
 
 
         // Helper method for password hashing

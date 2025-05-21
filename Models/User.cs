@@ -39,7 +39,8 @@ namespace apiTechSkillPro.Models
             public ICollection<Feedback> Feedbacks { get; set; }
             public ICollection<Notification> Notifications { get; set; }
             public ICollection<UserProgress> UserProgresses { get; set; }
-        }
+
+    }
     
 
 }

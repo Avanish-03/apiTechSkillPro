@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using apiTechSkillPro.Data;
 using apiTechSkillPro.Models;
+using apiTechSkillPro.DTOs;
 
 namespace apiTechSkillPro.Controllers
 {
@@ -15,6 +16,56 @@ namespace apiTechSkillPro.Controllers
         {
             _context = context;
         }
+
+
+        [HttpGet("getprofile")]
+        public async Task<IActionResult> GetProfile( int userID)
+        {
+            if (userID <= 0)
+                return BadRequest("Invalid UserID.");
+
+            var user = await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.UserID == userID);
+
+            if (user == null)
+                return NotFound("User not found.");
+
+            return Ok(new
+            {
+                userID = user.UserID,
+                name = user.FullName,
+                email = user.Email,
+                roleId = user.RoleID,
+                profileImage = user.ProfileImage
+            });
+        }
+
+        [HttpPut("updateprofile")]
+        public async Task<IActionResult> UpdateProfile([FromForm] UserUpdateDTO dto)
+        {
+            var user = await _context.Users.FindAsync(dto.UserID);
+            if (user == null) return NotFound();
+
+            user.FullName = dto.FullName;
+            user.Email = dto.Email;
+
+            if (dto.ProfileImage != null)
+            {
+                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(dto.ProfileImage.FileName)}";
+                var path = Path.Combine("wwwroot/images", fileName);
+                using (var stream = new FileStream(path, FileMode.Create))
+                {
+                    await dto.ProfileImage.CopyToAsync(stream);
+                }
+                user.ProfileImage = $"/images/{fileName}";
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(user);
+        }
+
+
 
         // GET: api/User
         [HttpGet]
