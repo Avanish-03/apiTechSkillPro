@@ -1,4 +1,5 @@
 ﻿using apiTechSkillPro.Data;
+using apiTechSkillPro.DTOs;
 using apiTechSkillPro.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -41,8 +42,31 @@ namespace apiTechSkillPro.Controllers
 
         // POST: api/Category
         [HttpPost]
-        public async Task<ActionResult<Category>> PostCategory(Category category)
+        public async Task<ActionResult<Category>> PostCategory([FromForm] CategoryCreateDTO categoryDto)
         {
+            var category = new Category
+            {
+                Name = categoryDto.Name,
+                Description = categoryDto.Description
+            };
+
+            // Save Image if exists
+            if (categoryDto.Image != null)
+            {
+                var uploadsFolder = Path.Combine("wwwroot", "images", "categories");
+                Directory.CreateDirectory(uploadsFolder); // Ensure folder exists
+
+                var uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(categoryDto.Image.FileName);
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await categoryDto.Image.CopyToAsync(stream);
+                }
+
+                category.ImageURL = "/images/categories/" + uniqueFileName;
+            }
+
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
 

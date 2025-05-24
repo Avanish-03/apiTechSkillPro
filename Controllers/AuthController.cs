@@ -27,6 +27,8 @@ namespace apiTechSkillPro.Controllers
             _context = context;
         }
 
+
+        //Register
         [HttpPost("signup")]
         public async Task<IActionResult> Signup([FromForm] UserRegisterDTO signupDTO)
         {
@@ -76,6 +78,7 @@ namespace apiTechSkillPro.Controllers
             return Ok(new { message = "User registered successfully." });
         }
 
+
         // Login endpoint
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] UserLoginDTO loginDTO)
@@ -95,6 +98,9 @@ namespace apiTechSkillPro.Controllers
 
             // Generate JWT Token
             var token = GenerateJwtToken(user);
+
+            // Set user ID into session
+            HttpContext.Session.SetInt32("UserID", user.UserID);
 
             // Return token along with user details
             return Ok(new { token, userID = user.UserID, fullName = user.FullName, email = user.Email, roleId = user.RoleID });
