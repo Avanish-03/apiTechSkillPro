@@ -14,12 +14,10 @@ namespace apiTechSkillPro.Data
         public DbSet<Role> Roles { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Leaderboard> Leaderboards { get; set; }
-
         public DbSet<Quiz> Quizzes { get; set; }
         public DbSet<Question> Questions { get; set; }
         public DbSet<QuizAttempt> QuizAttempts { get; set; }
         public DbSet<QuizAttemptLog> QuizAttemptLogs { get; set; }
-
         public DbSet<Answer> Answers { get; set; }
         public DbSet<Result> Results { get; set; }
         public DbSet<Feedback> Feedbacks { get; set; }
@@ -27,16 +25,17 @@ namespace apiTechSkillPro.Data
         public DbSet<QuizRules> QuizRules { get; set; }
         public DbSet<UserProgress> UserProgresses { get; set; }
 
+        public DbSet<apiTechSkillPro.Models.Leaderboard> Leaderboard { get; set; } = default!;
+        public DbSet<apiTechSkillPro.Models.QuizAttemptLog> QuizAttemptLog { get; set; } = default!;
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-
             // Configure User-Role relationship
             modelBuilder.Entity<User>()
-    .HasOne(u => u.Role)
-    .WithMany(r => r.Users)
-    .HasForeignKey(u => u.RoleID)
-    .OnDelete(DeleteBehavior.Restrict);
-
+                .HasOne(u => u.Role)
+                .WithMany(r => r.Users)
+                .HasForeignKey(u => u.RoleID)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Configure Quiz-Category relationship
             modelBuilder.Entity<Quiz>()
@@ -73,12 +72,10 @@ namespace apiTechSkillPro.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<QuizAttemptLog>()
-    .HasOne(qal => qal.QuizAttempt1)
-    .WithMany(qa => qa.QuizAttemptLogs)
-    // or WithMany(q => q.QuizAttemptLogs) if you define a navigation property
-    .HasForeignKey(qal => qal.AttemptID)
-    .OnDelete(DeleteBehavior.Restrict);
-
+                .HasOne(qal => qal.QuizAttempt1)
+                .WithMany(qa => qa.QuizAttemptLogs)
+                .HasForeignKey(qal => qal.AttemptID)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Configure Result relationships
             modelBuilder.Entity<Result>()
@@ -165,8 +162,5 @@ namespace apiTechSkillPro.Data
                 .HasIndex(a => new { a.AttemptID, a.QuestionID })
                 .IsUnique();
         }
-        public DbSet<apiTechSkillPro.Models.Leaderboard> Leaderboard { get; set; } = default!;
-        public DbSet<apiTechSkillPro.Models.QuizAttemptLog> QuizAttemptLog { get; set; } = default!;
-        public object Activities { get; internal set; }
     }
 }

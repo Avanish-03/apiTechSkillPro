@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System;
 using Humanizer;
+using apiTechSkillPro.Helpers;
 
 namespace apiTechSkillPro.Controllers
 {
@@ -20,11 +21,14 @@ namespace apiTechSkillPro.Controllers
     public class AuthController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        private readonly string _jwtSecretKey = "your-very-long-secret-key"; // You should move this to a configuration file
+        private readonly JwtTokenGenerator _jwtTokenGenerator;
+        //private readonly string _jwtSecretKey = "your-very-long-secret-key"; // You should move this to a configuration file
 
-        public AuthController(ApplicationDbContext context)
+        public AuthController(ApplicationDbContext context, JwtTokenGenerator jwtTokenGenerator)
         {
             _context = context;
+            _jwtTokenGenerator = jwtTokenGenerator;
+
         }
 
 
@@ -37,15 +41,13 @@ namespace apiTechSkillPro.Controllers
                 return BadRequest("Invalid data.");
             }
 
-            var existingUser = await _context.Users
-                                             .FirstOrDefaultAsync(u => u.Email == signupDTO.Email);
+            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == signupDTO.Email);
             if (existingUser != null)
             {
                 return BadRequest("Email already in use.");
             }
 
-            var role = await _context.Roles
-                                     .FirstOrDefaultAsync(r => r.RoleID == signupDTO.RoleID);
+            var role = await _context.Roles.FirstOrDefaultAsync(r => r.RoleID == signupDTO.RoleID);
             if (role == null)
             {
                 return BadRequest($"Invalid role ID: {signupDTO.RoleID}. Please provide a valid RoleID.");
@@ -90,22 +92,30 @@ namespace apiTechSkillPro.Controllers
 
             // Find the user by email
             var user = await _context.Users
-                                      .FirstOrDefaultAsync(u => u.Email == loginDTO.Email);
+            .Include(u => u.Role) // <-- Add this line to include Role data
+            .FirstOrDefaultAsync(u => u.Email == loginDTO.Email);
             if (user == null || !VerifyPassword(user.PasswordHash, loginDTO.Password))
             {
                 return Unauthorized("Invalid credentials.");
             }
 
             // Generate JWT Token
-            var token = GenerateJwtToken(user);
+            var token = _jwtTokenGenerator.GenerateToken(user.Email, user.RoleID, user.UserID, user.Role.RoleName.ToString());
 
-            // Set user ID into session
-            HttpContext.Session.SetInt32("UserID", user.UserID);
 
             // Return token along with user details
-            return Ok(new { token, userID = user.UserID, fullName = user.FullName, email = user.Email, roleId = user.RoleID });
+            return Ok(new
+            {
+                Token = token,
+                User = new
+                {
+                    user.UserID,
+                    user.Email,
+                    user.RoleID,
+                    RoleName = user.Role.RoleName.ToString()
+                }
+            });
         }
-
 
 
 
@@ -126,29 +136,7 @@ namespace apiTechSkillPro.Controllers
             return storedHash == inputHash;
         }
 
-        // Helper method to generate JWT token
-        private string GenerateJwtToken(User user)
-        {
-            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes("YourSecretKeyHereWhichIsAtLeast32CharactersLong123!"));
 
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
-            {
-        new Claim(JwtRegisteredClaimNames.Sub, user.Email),
-        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-    };
-
-            var token = new JwtSecurityToken(
-                issuer: "TechSkillPro",
-                audience: "Users",
-                claims: claims,
-                expires: DateTime.Now.AddHours(1),
-                signingCredentials: credentials
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
 
     }
 }

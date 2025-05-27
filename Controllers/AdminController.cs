@@ -3,6 +3,7 @@ using System.Text;
 using apiTechSkillPro.Data;
 using apiTechSkillPro.DTOs;
 using apiTechSkillPro.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -57,6 +58,7 @@ namespace apiTechSkillPro.Controllers
 
 
         [HttpGet("getallusers")]
+        //[Authorize]
         public async Task<IActionResult> GetAllUsers()
         {
             var users = await _context.Users
@@ -130,7 +132,7 @@ namespace apiTechSkillPro.Controllers
         }
 
 
-
+        // Update User Details
         [HttpPut("updateuser")]
         public async Task<IActionResult> UpdateUser([FromForm] UserUpdateDTO dto)
         {
@@ -166,7 +168,7 @@ namespace apiTechSkillPro.Controllers
         }
 
 
-
+        //Delete User Details
         [HttpDelete("deleteuser/{id}")]
         public IActionResult DeleteUser(int id)
         {
