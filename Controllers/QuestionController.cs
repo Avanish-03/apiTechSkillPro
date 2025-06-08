@@ -1,4 +1,5 @@
 ﻿using apiTechSkillPro.Data;
+using apiTechSkillPro.DTOs;
 using apiTechSkillPro.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,75 +20,118 @@ namespace apiTechSkillPro.Controllers
             _context = context;
         }
 
-        // GET: api/Question
+        // ✅ GET all questions
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Question>>> GetQuestions()
         {
-            return await _context.Questions
-                .Include(q => q.Quiz)
-                .ToListAsync();
+            var questions = await _context.Questions.ToListAsync();  // Removed .Include(q => q.Quiz) to avoid circular references
+
+            return Ok(questions);
         }
 
-        // GET: api/Question/5
+        // ✅ GET single question
         [HttpGet("{id}")]
         public async Task<ActionResult<Question>> GetQuestion(int id)
         {
             var question = await _context.Questions
-                .Include(q => q.Quiz)
                 .FirstOrDefaultAsync(q => q.QuestionID == id);
 
             if (question == null)
-                return NotFound();
+                return NotFound(new { message = "Question not found." });
 
-            return question;
+            return Ok(question);
         }
 
-        // POST: api/Question
+        // ✅ POST create question using DTO
         [HttpPost]
-        public async Task<ActionResult<Question>> PostQuestion(Question question)
+        public async Task<ActionResult> PostQuestion([FromBody] QuestionCreateDTO dto)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var quiz = await _context.Quizzes.FindAsync(dto.QuizID);
+            if (quiz == null)
+                return BadRequest(new { message = "QuizID not valid." });
+
+            var question = new Question
+            {
+                QuizID = dto.QuizID,
+                QuestionText = dto.QuestionText,
+                QuestionType = dto.QuestionType,
+                Option1 = dto.Option1,
+                Option2 = dto.Option2,
+                Option3 = dto.Option3,
+                Option4 = dto.Option4,
+                CorrectAnswer = dto.CorrectAnswer,
+                Marks = dto.Marks,
+                Difficulty = dto.Difficulty,
+                Explanation = dto.Explanation,
+                Sequence = dto.Sequence
+            };
+
             _context.Questions.Add(question);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetQuestion), new { id = question.QuestionID }, question);
+            return Ok(new
+            {
+                message = "Question added successfully.",
+                questionID = question.QuestionID
+            });
         }
 
-        // PUT: api/Question/5
+        // ✅ PUT update question
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutQuestion(int id, Question question)
+        public async Task<IActionResult> PutQuestion(int id, [FromBody] QuestionCreateDTO dto)
         {
-            if (id != question.QuestionID)
-                return BadRequest();
+            var existingQuestion = await _context.Questions.FindAsync(id);
+            if (existingQuestion == null)
+                return NotFound(new { message = "Question not found." });
 
-            _context.Entry(question).State = EntityState.Modified;
+            existingQuestion.QuestionText = dto.QuestionText;
+            existingQuestion.QuestionType = dto.QuestionType;
+            existingQuestion.Option1 = dto.Option1;
+            existingQuestion.Option2 = dto.Option2;
+            existingQuestion.Option3 = dto.Option3;
+            existingQuestion.Option4 = dto.Option4;
+            existingQuestion.CorrectAnswer = dto.CorrectAnswer;
+            existingQuestion.Marks = dto.Marks;
+            existingQuestion.Difficulty = dto.Difficulty;
+            existingQuestion.Explanation = dto.Explanation;
+            existingQuestion.Sequence = dto.Sequence;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Questions.Any(q => q.QuestionID == id))
-                    return NotFound();
-                else
-                    throw;
-            }
+            await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(new { message = "Question updated successfully." });
         }
 
-        // DELETE: api/Question/5
+        // ✅ DELETE question
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteQuestion(int id)
         {
             var question = await _context.Questions.FindAsync(id);
             if (question == null)
-                return NotFound();
+                return NotFound(new { message = "Question not found." });
 
             _context.Questions.Remove(question);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(new { message = "Question deleted successfully." });
+        }
+
+        // ✅ GET all questions for a specific quiz
+        [HttpGet("quiz/{quizId}")]
+        public async Task<ActionResult<IEnumerable<Question>>> GetQuestionsByQuizId(int quizId)
+        {
+            var questions = await _context.Questions
+                .Where(q => q.QuizID == quizId)
+                .OrderBy(q => q.Sequence)  // Ensure questions are ordered based on sequence
+                .ToListAsync();
+
+            // Instead of null, return empty list if no questions are found
+            if (!questions.Any())
+                return NotFound(new { message = "No questions found for this quiz." });
+
+            return Ok(questions);
         }
     }
 }

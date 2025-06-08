@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using apiTechSkillPro.Models;
 
 namespace apiTechSkillPro.Models
@@ -20,8 +21,10 @@ namespace apiTechSkillPro.Models
         public string Description { get; set; }
         public int Duration { get; set; } // in minutes
 
-        public int CreatedBy { get; set; }
-        public User Creator { get; set; }
+        public int CreatedBy { get; set; }  // Foreign key
+
+        [ForeignKey("CreatedBy")]           // Add this line
+        public User Creator { get; set; }   // Navigation property
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public bool IsPublished { get; set; } = false;
@@ -36,4 +39,5 @@ namespace apiTechSkillPro.Models
         public ICollection<Feedback> Feedbacks { get; set; }
         public QuizRules QuizRules { get; set; }
     }
+
 }

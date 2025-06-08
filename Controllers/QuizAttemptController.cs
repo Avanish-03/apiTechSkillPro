@@ -1,10 +1,13 @@
 ﻿using apiTechSkillPro.Data;
 using apiTechSkillPro.Models;
+using apiTechSkillPro.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System;
+using apiTechSkillPro.DTO;
 
 namespace apiTechSkillPro.Controllers
 {
@@ -26,6 +29,7 @@ namespace apiTechSkillPro.Controllers
             return await _context.QuizAttempts
                 .Include(a => a.User)
                 .Include(a => a.Quiz)
+                .Include(a => a.Answers)
                 .ToListAsync();
         }
 
@@ -45,14 +49,104 @@ namespace apiTechSkillPro.Controllers
             return attempt;
         }
 
-        // POST: api/QuizAttempt
-        [HttpPost]
-        public async Task<ActionResult<QuizAttempt>> StartAttempt(QuizAttempt attempt)
+        // POST: api/QuizAttempt/start
+        [HttpPost("start")]
+        public async Task<ActionResult> StartAttempt([FromBody] QuizAttemptCreateDTO dto)
         {
+            var attempt = new QuizAttempt
+            {
+                UserID = dto.UserID,
+                QuizID = dto.QuizID,
+                StartTime = DateTime.UtcNow,
+                IPAddress = dto.IPAddress
+            };
+
             _context.QuizAttempts.Add(attempt);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetQuizAttempt), new { id = attempt.AttemptID }, attempt);
+            return Ok(new
+            {
+                message = "Quiz attempt started.",
+                attemptID = attempt.AttemptID
+            });
+        }
+
+        // POST: api/QuizAttempt/submit
+        [HttpPost("submit")]
+        public async Task<ActionResult> SubmitAttempt([FromBody] QuizSubmissionDTO submission)
+        {
+            if (submission == null || submission.Answers == null || !submission.Answers.Any())
+                return BadRequest("Invalid submission.");
+
+            var quiz = await _context.Quizzes
+                .Include(q => q.Questions)
+                .FirstOrDefaultAsync(q => q.QuizID == submission.QuizID);
+
+            if (quiz == null)
+                return NotFound("Quiz not found.");
+
+            int totalScore = 0;
+            List<Answer> answerList = new();
+
+            foreach (var answerDto in submission.Answers)
+            {
+                var question = quiz.Questions.FirstOrDefault(q => q.QuestionID == answerDto.QuestionID);
+                if (question == null) continue;
+
+                bool isCorrect = question.CorrectAnswer.Trim().Equals(answerDto.SelectedAnswer.Trim(), StringComparison.OrdinalIgnoreCase);
+                if (isCorrect)
+                    totalScore += question.Marks;
+
+                answerList.Add(new Answer
+                {
+                    QuestionID = question.QuestionID,
+                    SelectedOption = answerDto.SelectedAnswer,
+                    IsCorrect = isCorrect
+                });
+            }
+
+            string resultStatus = totalScore >= quiz.PassingScore ? "Pass" : "Fail";
+
+            var attempt = new QuizAttempt
+            {
+                UserID = submission.UserID,
+                QuizID = submission.QuizID,
+                StartTime = DateTime.UtcNow.AddMinutes(-submission.TimeTaken), // approximate
+                EndTime = DateTime.UtcNow,
+                TimeSpent = submission.TimeTaken,
+                Score = totalScore,
+                Status = 2, // Completed
+                IPAddress = submission.IPAddress,
+                Answers = answerList
+            };
+
+            _context.QuizAttempts.Add(attempt);
+            await _context.SaveChangesAsync(); // to get AttemptID for foreign key
+
+            var result = new Result
+            {
+                UserID = submission.UserID,
+                QuizID = submission.QuizID,
+                AttemptID = attempt.AttemptID,
+                TotalMarks = quiz.Questions.Sum(q => q.Marks),
+                ObtainedMarks = totalScore,
+                Percentage = (decimal)totalScore / quiz.Questions.Sum(q => q.Marks) * 100,
+                TimeTaken = submission.TimeTaken,
+                AttemptDate = DateTime.UtcNow
+            };
+
+            _context.Results.Add(result);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Quiz submitted successfully.",
+                attemptID = attempt.AttemptID,
+                resultID = result.ResultID,
+                score = totalScore,
+                percentage = result.Percentage,
+                passStatus = resultStatus
+            });
         }
 
         // PUT: api/QuizAttempt/5
