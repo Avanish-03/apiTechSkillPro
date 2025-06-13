@@ -1,4 +1,5 @@
 ﻿using apiTechSkillPro.Data;
+using apiTechSkillPro.DTOs;
 using apiTechSkillPro.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -43,11 +44,29 @@ namespace apiTechSkillPro.Controllers
 
         // POST: api/Feedback
         [HttpPost]
-        public async Task<ActionResult<Feedback>> PostFeedback(Feedback feedback)
+        public async Task<ActionResult<Feedback>> PostFeedback(FeedbackCreateDTO dto)
         {
-            // Optional: Validate Rating (1 to 5)
-            if (feedback.Rating < 1 || feedback.Rating > 5)
+            // Validate Rating
+            if (dto.Rating < 1 || dto.Rating > 5)
                 return BadRequest("Rating must be between 1 and 5.");
+
+            // Check User and Quiz existence
+            var userExists = await _context.Users.AnyAsync(u => u.UserID == dto.UserID);
+            var quizExists = await _context.Quizzes.AnyAsync(q => q.QuizID == dto.QuizID);
+
+            if (!userExists || !quizExists)
+                return BadRequest("Invalid UserID or QuizID.");
+
+            // Map DTO to Entity
+            var feedback = new Feedback
+            {
+                UserID = dto.UserID,
+                QuizID = dto.QuizID,
+                Rating = dto.Rating,
+                Comments = dto.Comments,
+                IsAnonymous = dto.IsAnonymous,
+                SubmittedAt = DateTime.UtcNow
+            };
 
             _context.Feedbacks.Add(feedback);
             await _context.SaveChangesAsync();
@@ -60,7 +79,7 @@ namespace apiTechSkillPro.Controllers
         public async Task<IActionResult> PutFeedback(int id, Feedback feedback)
         {
             if (id != feedback.FeedbackID)
-                return BadRequest();
+                return BadRequest("Feedback ID mismatch.");
 
             _context.Entry(feedback).State = EntityState.Modified;
 
@@ -95,7 +114,7 @@ namespace apiTechSkillPro.Controllers
 
         private bool FeedbackExists(int id)
         {
-            return _context.Feedbacks.Any(e => e.FeedbackID == id);
+            return _context.Feedbacks.Any(f => f.FeedbackID == id);
         }
     }
 }

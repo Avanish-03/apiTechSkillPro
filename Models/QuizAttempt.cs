@@ -24,10 +24,10 @@ namespace apiTechSkillPro.Models
         public string IPAddress { get; set; }
 
         // Navigation properties
-        public ICollection<Answer> Answers { get; set; }
-        public Result Result { get; set; }
-        public UserProgress UserProgress { get; set; }
-        public ICollection<QuizAttemptLog> QuizAttemptLogs { get; set; }
+        public ICollection<Answer>? Answers { get; set; }
+        public Result? Result { get; set; }
+        public UserProgress? UserProgress { get; set; }
+        public ICollection<QuizAttemptLog>? QuizAttemptLogs { get; set; }
 
     }
 }

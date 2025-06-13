@@ -89,6 +89,34 @@ namespace apiTechSkillPro.Migrations
                     b.ToTable("Categories");
                 });
 
+            modelBuilder.Entity("apiTechSkillPro.Models.ContactMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ContactMessages");
+                });
+
             modelBuilder.Entity("apiTechSkillPro.Models.Feedback", b =>
                 {
                     b.Property<int>("FeedbackID")
@@ -346,7 +374,7 @@ namespace apiTechSkillPro.Migrations
                     b.Property<int>("UserID")
                         .HasColumnType("int");
 
-                    b.Property<int>("UserProgressProgressID")
+                    b.Property<int?>("UserProgressProgressID")
                         .HasColumnType("int");
 
                     b.HasKey("AttemptID");
@@ -708,9 +736,7 @@ namespace apiTechSkillPro.Migrations
 
                     b.HasOne("apiTechSkillPro.Models.UserProgress", "UserProgress")
                         .WithMany()
-                        .HasForeignKey("UserProgressProgressID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserProgressProgressID");
 
                     b.Navigation("Quiz");
 
@@ -842,8 +868,7 @@ namespace apiTechSkillPro.Migrations
 
                     b.Navigation("QuizAttemptLogs");
 
-                    b.Navigation("Result")
-                        .IsRequired();
+                    b.Navigation("Result");
                 });
 
             modelBuilder.Entity("apiTechSkillPro.Models.Role", b =>

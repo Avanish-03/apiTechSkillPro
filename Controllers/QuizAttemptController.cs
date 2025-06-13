@@ -33,6 +33,29 @@ namespace apiTechSkillPro.Controllers
                 .ToListAsync();
         }
 
+        // GET: api/QuizAttempt/{attemptID}/questions
+        [HttpGet("{attemptID}/questions")]
+        public async Task<ActionResult<IEnumerable<QuestionDTO>>> GetAttemptQuestions(int attemptID)
+        {
+            var attempt = await _context.QuizAttempts
+                .Include(a => a.Quiz)
+                    .ThenInclude(q => q.Questions)
+                .FirstOrDefaultAsync(a => a.AttemptID == attemptID);
+
+            if (attempt == null)
+                return NotFound("Attempt not found.");
+
+            var questionDTOs = attempt.Quiz.Questions.Select(q => new QuestionDTO
+            {
+                QuestionID = q.QuestionID,
+                QuestionText = q.QuestionText,
+                Options = new List<string> { q.Option1, q.Option2, q.Option3, q.Option4 }
+            }).ToList();
+
+            return Ok(questionDTOs);
+        }
+
+
         // GET: api/QuizAttempt/5
         [HttpGet("{id}")]
         public async Task<ActionResult<QuizAttempt>> GetQuizAttempt(int id)
@@ -53,23 +76,63 @@ namespace apiTechSkillPro.Controllers
         [HttpPost("start")]
         public async Task<ActionResult> StartAttempt([FromBody] QuizAttemptCreateDTO dto)
         {
-            var attempt = new QuizAttempt
-            {
-                UserID = dto.UserID,
-                QuizID = dto.QuizID,
-                StartTime = DateTime.UtcNow,
-                IPAddress = dto.IPAddress
-            };
+            // Basic validation
+            if (dto == null)
+                return BadRequest("Request body is null.");
+            if (dto.UserID <= 0 || dto.QuizID <= 0)
+                return BadRequest("Invalid UserID or QuizID.");
 
-            _context.QuizAttempts.Add(attempt);
-            await _context.SaveChangesAsync();
+            // Check FK existence
+            var user = await _context.Users.FindAsync(dto.UserID);
+            var quiz = await _context.Quizzes.FindAsync(dto.QuizID);
+            if (user == null || quiz == null)
+                return BadRequest("User or Quiz not found.");
 
-            return Ok(new
+            try
             {
-                message = "Quiz attempt started.",
-                attemptID = attempt.AttemptID
-            });
+                var attempt = new QuizAttempt
+                {
+                    UserID = dto.UserID,
+                    QuizID = dto.QuizID,
+                    StartTime = DateTime.UtcNow,
+                    IPAddress = dto.IPAddress ?? "127.0.0.1",
+                    Status = 1,     // 1 = In Progress
+                    TimeSpent = 0      // at start, 0 seconds
+                };
+
+                _context.QuizAttempts.Add(attempt);
+                await _context.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    message = "Quiz attempt started.",
+                    attemptID = attempt.AttemptID
+                });
+            }
+            catch (Exception ex)
+            {
+                // return the real error for debugging
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
+
+        //allquiz attempt by user
+        [HttpGet("UserQuizzes/{userId}")]
+        public async Task<ActionResult<IEnumerable<object>>> GetAttemptedQuizzes(int userId)
+        {
+            var attemptedQuizzes = await _context.QuizAttempts
+                .Where(q => q.UserID == userId)
+                .Include(q => q.Quiz)
+                .Select(q => new {
+                    q.QuizID,
+                    q.Quiz.Title
+                })
+                .Distinct()
+                .ToListAsync();
+
+            return Ok(attemptedQuizzes);
+        }
+
 
         // POST: api/QuizAttempt/submit
         [HttpPost("submit")]

@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using apiTechSkillPro.Data;
 using apiTechSkillPro.Models;
 using apiTechSkillPro.DTOs;
+using System.Text;
+using System.Security.Cryptography;
 
 namespace apiTechSkillPro.Controllers
 {
@@ -19,7 +21,7 @@ namespace apiTechSkillPro.Controllers
 
 
         [HttpGet("getprofile")]
-        public async Task<IActionResult> GetProfile( int userID)
+        public async Task<IActionResult> GetProfile(int userID)
         {
             if (userID <= 0)
                 return BadRequest("Invalid UserID.");
@@ -127,5 +129,41 @@ namespace apiTechSkillPro.Controllers
 
             return NoContent();
         }
+
+        // Change Password Endpoint
+        [HttpPut("changepassword")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO dto)
+        {
+            if (dto == null || dto.UserID <= 0 ||
+                string.IsNullOrWhiteSpace(dto.CurrentPassword) ||
+                string.IsNullOrWhiteSpace(dto.NewPassword))
+            {
+                return BadRequest("Invalid input data.");
+            }
+
+            var user = await _context.Users.FindAsync(dto.UserID);
+            if (user == null)
+                return NotFound("User not found.");
+
+            string currentHash = HashPassword(dto.CurrentPassword);
+
+            if (user.PasswordHash != currentHash)
+                return BadRequest("Current password is incorrect.");
+
+            user.PasswordHash = HashPassword(dto.NewPassword);
+
+            await _context.SaveChangesAsync();
+
+            return Ok("Password changed successfully.");
+        }
+
+        // Helper for Hashing
+        private string HashPassword(string password)
+        {
+            using var sha256 = SHA256.Create();
+            byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+            return Convert.ToBase64String(bytes);
+        }
+
     }
 }

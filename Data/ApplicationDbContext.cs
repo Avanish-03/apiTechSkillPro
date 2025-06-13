@@ -13,6 +13,7 @@ namespace apiTechSkillPro.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<Category> Categories { get; set; }
+        public DbSet<ContactMessage> ContactMessages { get; set; }
         public DbSet<Leaderboard> Leaderboards { get; set; }
         public DbSet<Quiz> Quizzes { get; set; }
         public DbSet<Question> Questions { get; set; }

@@ -36,7 +36,7 @@ namespace apiTechSkillPro.Controllers
         {
             var totalUsers = await _context.Users.CountAsync(u => u.RoleID != 1); // Students
             var totalQuizzes = await _context.Quizzes.CountAsync();
-            var totalFeedbacks = await _context.Feedbacks.CountAsync();
+            var totalFeedbacks = await _context.ContactMessages.CountAsync();
             var totalResults = await _context.Results.CountAsync();
 
             var stats = new
@@ -56,7 +56,7 @@ namespace apiTechSkillPro.Controllers
             });
         }
 
-
+        //GetAllUser
         [HttpGet("getallusers")]
         //[Authorize]
         public async Task<IActionResult> GetAllUsers()
@@ -79,6 +79,38 @@ namespace apiTechSkillPro.Controllers
 
             return Ok(users);
         }
+
+
+        //Search
+        [HttpGet("searchusers")]
+        public async Task<IActionResult> SearchUsers([FromQuery] string keyword)
+        {
+            if (string.IsNullOrEmpty(keyword))
+            {
+                return BadRequest(new { message = "Search keyword is required." });
+            }
+
+            var users = await _context.Users
+                .Where(u => (u.RoleID == 2 || u.RoleID == 3) &&
+                       (u.FullName.ToLower().Contains(keyword.ToLower()) ||
+                        u.Email.ToLower().Contains(keyword.ToLower())))
+                .Select(u => new
+                {
+                    u.UserID,
+                    u.FullName,
+                    u.Email,
+                    u.RoleID,
+                    u.ProfileImage,
+                    Role = _context.Roles
+                        .Where(r => r.RoleID == u.RoleID)
+                        .Select(r => r.RoleName)
+                        .FirstOrDefault()
+                })
+                .ToListAsync();
+
+            return Ok(users);
+        }
+
 
         // Add a new user
         [HttpPost("signup")]
