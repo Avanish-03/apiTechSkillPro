@@ -134,8 +134,31 @@ namespace apiTechSkillPro.Controllers
             return Ok(attempts);
         }
 
+        [HttpGet("quiz-analytics")]
+        public async Task<ActionResult<object>> GetQuizAnalytics()
+        {
+            var totalQuizzes = await _context.Quizzes.CountAsync();
 
+            var totalStudents = await _context.Users
+                .Where(u => u.RoleID == 2) // Assuming RoleID 2 is Student
+                .CountAsync();
 
+            var totalAttempts = await _context.QuizAttempts.CountAsync();
+
+            var averageScore = await _context.QuizAttempts
+                .Select(a => (double?)a.Score)
+                .AverageAsync() ?? 0;
+
+            return Ok(new
+            {
+                totalQuizzes,
+                totalStudents,
+                totalAttempts,
+                averageScore = Math.Round(averageScore, 2)
+            });
+        }
+
+  
         // Add a new user
         [HttpPost("signup")]
         public async Task<IActionResult> Signup([FromForm] UserRegisterDTO signupDTO)

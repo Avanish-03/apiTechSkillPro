@@ -106,6 +106,30 @@ namespace apiTechSkillPro.Controllers
             return CreatedAtAction(nameof(GetLeaderboard), new { id = leaderboard.LeaderboardID }, leaderboard);
         }
 
+        // GET: api/Leaderboard/createdby/{teacherId}/students-results
+        
+        [HttpGet("createdby/{teacherId}/students-results")]
+        public async Task<ActionResult<IEnumerable<object>>> GetResultsByTeacher(int teacherId)
+        {
+            var results = await _context.Leaderboards
+                .Include(lb => lb.User)
+                .Include(lb => lb.Quiz)
+                .Where(lb => lb.Quiz.CreatedBy == teacherId)
+                .OrderByDescending(lb => lb.Score)
+                .Select(lb => new
+                {
+                    studentName = lb.User.FullName,
+                    quizTitle = lb.Quiz.Title,
+                    score = lb.Score,
+                    rank = lb.Rank
+                })
+                .ToListAsync();
+
+            return Ok(results);
+        }
+
+
+
         // PUT: api/Leaderboard/5
         [HttpPut("{id}")]
         public async Task<IActionResult> PutLeaderboard(int id, LeaderboardCreateDTO dto)

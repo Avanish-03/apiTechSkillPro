@@ -130,6 +130,40 @@ namespace apiTechSkillPro.Controllers
             return Ok(result);
         }
 
+        // ✅ Get student results for quizzes created by this teacher (using UserID)
+        [HttpGet("createdby/{userId}/students-results")]
+        public async Task<ActionResult<IEnumerable<object>>> GetResultsByTeacherUserID(int userId)
+        {
+            // Ensure this user is actually a teacher
+            var isTeacher = await _context.Users.AnyAsync(u => u.UserID == userId && u.RoleID == 3);
+            if (!isTeacher)
+                return BadRequest("User is not a teacher.");
+
+            // Get results where the quiz is created by this teacher
+            var results = await _context.Results
+                .Include(r => r.User)
+                .Include(r => r.Quiz)
+                .Where(r => r.Quiz.CreatedBy == userId) // <<== Quiz CreatedBy = Teacher's UserID
+                .Select(r => new
+                {
+                    StudentName = r.User.FullName,
+                    QuizTitle = r.Quiz.Title,
+                    r.ObtainedMarks,
+                    r.TotalMarks,
+                    r.Percentage,
+                    r.Rank,
+                    r.ResultStatus,
+                    r.TimeTaken
+                })
+                .ToListAsync();
+
+            if (results == null || results.Count == 0)
+                return NotFound("No results found for quizzes created by this teacher.");
+
+            return Ok(results);
+        }
+
+
 
         // ✅ Delete result
         [HttpDelete("{id}")]
