@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using apiTechSkillPro.Data;
 using apiTechSkillPro.Models;
+using apiTechSkillPro.DTOs;
 
 namespace apiTechSkillPro.Controllers
 {
@@ -41,37 +42,84 @@ namespace apiTechSkillPro.Controllers
             return leaderboard;
         }
 
+        //[HttpGet("user/{userId}/quiz/{quizId}")]
+        [HttpGet("user/{userId}/quiz/{quizId}")]
+        public async Task<ActionResult<Leaderboard>> GetLeaderboardByUserAndQuiz(int userId, int quizId)
+        {
+            var leaderboard = await _context.Leaderboards
+                .Include(lb => lb.User)
+                .Include(lb => lb.Quiz)
+                .FirstOrDefaultAsync(lb => lb.UserID == userId && lb.QuizID == quizId);
+
+            if (leaderboard == null)
+                return NotFound();
+
+            return Ok(leaderboard);
+        }
+
+
+        // GET: api/Leaderboard/search?userId=1&quizId=2
+        [HttpGet("search")]
+        public async Task<ActionResult<IEnumerable<Leaderboard>>> SearchLeaderboard([FromQuery] int? userId, [FromQuery] int? quizId)
+        {
+            var query = _context.Leaderboards
+                .Include(lb => lb.User)
+                .Include(lb => lb.Quiz)
+                .AsQueryable();
+
+            if (userId.HasValue)
+                query = query.Where(lb => lb.UserID == userId.Value);
+
+            if (quizId.HasValue)
+                query = query.Where(lb => lb.QuizID == quizId.Value);
+
+            var result = await query.ToListAsync();
+            return result;
+        }
+
         // POST: api/Leaderboard
         [HttpPost]
-        public async Task<ActionResult<Leaderboard>> PostLeaderboard(Leaderboard leaderboard)
+        public async Task<ActionResult<Leaderboard>> PostLeaderboard(LeaderboardCreateDTO dto)
         {
+            // Check for duplicate (same UserID & QuizID)
+            var exists = await _context.Leaderboards
+                .AnyAsync(lb => lb.UserID == dto.UserID && lb.QuizID == dto.QuizID);
+
+            if (exists)
+                return BadRequest("Leaderboard entry already exists for this user and quiz.");
+
+            var leaderboard = new Leaderboard
+            {
+                UserID = dto.UserID,
+                QuizID = dto.QuizID,
+                Score = dto.Score,
+                Rank = dto.Rank
+            };
+
             _context.Leaderboards.Add(leaderboard);
             await _context.SaveChangesAsync();
+
+            // Load navigation props
+            await _context.Entry(leaderboard).Reference(lb => lb.User).LoadAsync();
+            await _context.Entry(leaderboard).Reference(lb => lb.Quiz).LoadAsync();
 
             return CreatedAtAction(nameof(GetLeaderboard), new { id = leaderboard.LeaderboardID }, leaderboard);
         }
 
         // PUT: api/Leaderboard/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutLeaderboard(int id, Leaderboard leaderboard)
+        public async Task<IActionResult> PutLeaderboard(int id, LeaderboardCreateDTO dto)
         {
-            if (id != leaderboard.LeaderboardID)
-                return BadRequest();
+            var leaderboard = await _context.Leaderboards.FindAsync(id);
+            if (leaderboard == null)
+                return NotFound();
 
-            _context.Entry(leaderboard).State = EntityState.Modified;
+            leaderboard.UserID = dto.UserID;
+            leaderboard.QuizID = dto.QuizID;
+            leaderboard.Score = dto.Score;
+            leaderboard.Rank = dto.Rank;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!LeaderboardExists(id))
-                    return NotFound();
-                else
-                    throw;
-            }
-
+            await _context.SaveChangesAsync();
             return NoContent();
         }
 
@@ -87,11 +135,6 @@ namespace apiTechSkillPro.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }
-
-        private bool LeaderboardExists(int id)
-        {
-            return _context.Leaderboards.Any(e => e.LeaderboardID == id);
         }
     }
 }

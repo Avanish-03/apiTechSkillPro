@@ -1,6 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 using apiTechSkillPro.Data;
+using apiTechSkillPro.DTO;
 using apiTechSkillPro.DTOs;
 using apiTechSkillPro.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -110,6 +111,29 @@ namespace apiTechSkillPro.Controllers
 
             return Ok(users);
         }
+
+        // GET: api/Admin/quiz-attempts
+        [HttpGet("quiz-attempts")]
+        public async Task<ActionResult<IEnumerable<QuizAttemptSummaryDTO>>> GetQuizAttemptsSummary()
+        {
+            var attempts = await _context.QuizAttempts
+                .Include(a => a.User)
+                .Include(a => a.Quiz)
+                .Select(a => new QuizAttemptSummaryDTO
+                {
+                    StudentName = a.User.FullName,
+                    QuizTitle = a.Quiz.Title,
+                    Score = a.Score ?? 0,
+                    TotalMarks = a.Quiz.Questions.Sum(q => q.Marks),
+                    PassingMarks = a.Quiz.PassingScore ?? 0,
+                    ResultStatus = (a.Score ?? 0) >= (a.Quiz.PassingScore ?? 0) ? "Pass" : "Fail",
+
+                })
+                .ToListAsync();
+
+            return Ok(attempts);
+        }
+
 
 
         // Add a new user

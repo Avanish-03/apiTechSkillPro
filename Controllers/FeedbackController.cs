@@ -42,6 +42,33 @@ namespace apiTechSkillPro.Controllers
             return feedback;
         }
 
+        // GET: api/Feedback/ByTeacher/5
+        [HttpGet("ByTeacher/{teacherId}")]
+        public async Task<ActionResult<IEnumerable<object>>> GetFeedbackByTeacher(int teacherId)
+        {
+            var feedbacks = await _context.Feedbacks
+                .Include(f => f.Quiz)
+                .Include(f => f.User)
+                .Where(f => f.Quiz.CreatedBy == teacherId)
+                .Select(f => new
+                {
+                    f.FeedbackID,
+                    f.Rating,
+                    f.Comments,
+                    f.IsAnonymous,
+                    f.SubmittedAt,
+                    QuizTitle = f.Quiz.Title,
+                    StudentName = f.IsAnonymous ? "Anonymous" : f.User.FullName
+                })
+                .ToListAsync();
+
+            if (feedbacks == null || feedbacks.Count == 0)
+                return NotFound("No feedback found for quizzes created by this teacher.");
+
+            return Ok(feedbacks);
+        }
+
+
         // POST: api/Feedback
         [HttpPost]
         public async Task<ActionResult<Feedback>> PostFeedback(FeedbackCreateDTO dto)

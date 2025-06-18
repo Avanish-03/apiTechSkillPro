@@ -16,6 +16,9 @@ namespace apiTechSkillPro.Models
         public int QuizID { get; set; }
         public Quiz Quiz { get; set; }
 
+        public string? ResultStatus { get; set; } 
+
+
         public int AttemptID { get; set; }
         public QuizAttempt QuizAttempt { get; set; }
 
@@ -26,7 +29,7 @@ namespace apiTechSkillPro.Models
         public decimal Percentage { get; set; }
 
         public int? Rank { get; set; }  
-        public DateTime AttemptDate { get; set; } = DateTime.UtcNow;
+        public DateTime AttemptDate { get; set; }
         public int TimeTaken { get; set; } // in seconds
     }
 }

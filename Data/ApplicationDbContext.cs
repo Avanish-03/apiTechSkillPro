@@ -57,7 +57,7 @@ namespace apiTechSkillPro.Data
                 .HasOne(q => q.Quiz)
                 .WithMany(qz => qz.Questions)
                 .HasForeignKey(q => q.QuizID)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Configure Answer relationships
             modelBuilder.Entity<Answer>()

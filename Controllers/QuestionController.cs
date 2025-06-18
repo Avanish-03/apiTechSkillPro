@@ -133,5 +133,30 @@ namespace apiTechSkillPro.Controllers
 
             return Ok(questions);
         }
+
+        // ✅ GET published questions for a specific quiz (for student side)
+        [HttpGet("quiz/{quizId}/published")]
+        public async Task<ActionResult<IEnumerable<object>>> GetPublishedQuestionsForQuiz(int quizId)
+        {
+            var quiz = await _context.Quizzes
+                .Include(q => q.Questions)
+                .FirstOrDefaultAsync(q => q.QuizID == quizId && q.IsPublished == true);
+
+            if (quiz == null)
+                return NotFound(new { message = "Published quiz not found or not available." });
+
+            var questions = quiz.Questions
+                .OrderBy(q => q.Sequence)
+                .Select(q => new
+                {
+                    questionID = q.QuestionID,
+                    questionText = q.QuestionText,
+                    options = new[] { q.Option1, q.Option2, q.Option3, q.Option4 }
+                })
+                .ToList();
+
+            return Ok(questions);
+        }
+
     }
 }

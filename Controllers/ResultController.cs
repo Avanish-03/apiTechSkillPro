@@ -1,7 +1,8 @@
-﻿using apiTechSkillPro.Data;
-using apiTechSkillPro.Models;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using apiTechSkillPro.Data;
+using apiTechSkillPro.Models;
+using apiTechSkillPro.DTOs;
 
 namespace apiTechSkillPro.Controllers
 {
@@ -16,7 +17,7 @@ namespace apiTechSkillPro.Controllers
             _context = context;
         }
 
-        // GET: api/Result
+        // ✅ Get all results
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Result>>> GetResults()
         {
@@ -27,7 +28,7 @@ namespace apiTechSkillPro.Controllers
                 .ToListAsync();
         }
 
-        // GET: api/Result/5
+        // ✅ Get result by ResultID
         [HttpGet("{id}")]
         public async Task<ActionResult<Result>> GetResult(int id)
         {
@@ -43,7 +44,7 @@ namespace apiTechSkillPro.Controllers
             return result;
         }
 
-        // GET: api/Result/user/3
+        // ✅ Get results by user
         [HttpGet("user/{userId}")]
         public async Task<ActionResult<IEnumerable<Result>>> GetResultsByUser(int userId)
         {
@@ -53,7 +54,7 @@ namespace apiTechSkillPro.Controllers
                 .ToListAsync();
         }
 
-        // GET: api/Result/quiz/2
+        // ✅ Get results by quiz
         [HttpGet("quiz/{quizId}")]
         public async Task<ActionResult<IEnumerable<Result>>> GetResultsByQuiz(int quizId)
         {
@@ -63,17 +64,34 @@ namespace apiTechSkillPro.Controllers
                 .ToListAsync();
         }
 
-        // POST: api/Result
+        // ✅ Post result using DTO
         [HttpPost]
-        public async Task<ActionResult<Result>> PostResult(Result result)
+        public async Task<ActionResult<Result>> PostResult(ResultCreateDTO dto)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = new Result
+            {
+                UserID = dto.UserID,
+                QuizID = dto.QuizID,
+                AttemptID = dto.AttemptID,
+                TotalMarks = dto.TotalMarks,
+                ObtainedMarks = dto.ObtainedMarks,
+                Percentage = dto.Percentage,
+                Rank = dto.Rank,
+                TimeTaken = dto.TimeTaken,
+                ResultStatus = dto.ResultStatus ?? "Pending"
+
+            };
+
             _context.Results.Add(result);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetResult), new { id = result.ResultID }, result);
         }
 
-        // PUT: api/Result/5
+        // ✅ Update result
         [HttpPut("{id}")]
         public async Task<IActionResult> PutResult(int id, Result result)
         {
@@ -97,7 +115,23 @@ namespace apiTechSkillPro.Controllers
             return NoContent();
         }
 
-        // DELETE: api/Result/5
+        // ✅ Get result by UserID and QuizID
+        [HttpGet("user/{userId}/quiz/{quizId}")]
+        public async Task<ActionResult<Result>> GetResultByUserAndQuiz(int userId, int quizId)
+        {
+            var result = await _context.Results
+                .Include(r => r.Quiz)
+                .Include(r => r.QuizAttempt)
+                .FirstOrDefaultAsync(r => r.UserID == userId && r.QuizID == quizId);
+
+            if (result == null)
+                return NotFound("Result not found for this quiz and user.");
+
+            return Ok(result);
+        }
+
+
+        // ✅ Delete result
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteResult(int id)
         {

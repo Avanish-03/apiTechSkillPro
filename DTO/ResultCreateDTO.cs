@@ -10,5 +10,6 @@
         public decimal Percentage { get; set; }
         public int? Rank { get; set; }
         public int TimeTaken { get; set; } // in seconds
+        public string? ResultStatus { get; internal set; }
     }
 }
